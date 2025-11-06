@@ -1,0 +1,74 @@
+#!/bin/bash
+
+echo "######################################"
+echo "###  Axion Builder for samsa A53   ###"                
+echo "######################################"
+
+# vars
+axiondir="$HOME/roms/axion/"
+keysdir="${axiondir}/vendor/lineage-priv/keys"
+
+# add ccache to bashrc?
+read -p "add ccache to bashrc? (y/n): " ans
+
+if [[ "$ans" == "y" ]]; then
+  echo 'export USE_CCACHE=1' >> ~/.bashrc
+  echo 'export CCACHE_COMPRESS=1' >> ~/.bashrc
+  echo 'export CCACHE_MAXSIZE=50G' >> ~/.bashrc
+fi
+
+echo "added to bashrc"
+
+# gen keys
+if [ ! -d "$keysdir" ]; then
+  echo "gen keys.."
+  mkdir -p "$keysdir"
+  cd "$keysdir"
+  
+  subject='/C=PL/ST=Mazowieckie/L=Warsaw/O=AxionOS/OU=AxionOS/CN=AxionOS'
+  
+  for key in nfc bluetooth media networkstack platform releasekey sdk_sandbox shared testkey verifiedboot; do
+    echo "generating $key..."
+    $axiondir/development/tools/make_key "$keysdir/$key" "$subject"
+  done
+  
+  cat > "$keysdir/keys.mk" << 'EOF'
+PRODUCT_DEFAULT_DEV_CERTIFICATE := vendor/lineage-priv/keys/releasekey
+PRODUCT_EXTRA_RECOVERY_KEYS := vendor/lineage-priv/keys/releasekey
+EOF
+  
+  touch "$keysdir/BUILD.bazel"
+else
+  echo "Keys already here vro, i ain't generating it again"
+fi
+
+# launch env
+cd $axiondir
+
+sleep 1
+
+. build/envsetup.sh
+
+ccache -M 50G -F 0
+
+# select target
+echo "Select an option:"
+echo "1) Build vanilla 1"
+echo "2) Build gapps 2"
+read -p "Pick build target [1-2]: " choice
+
+case $choice in
+  1)
+    echo "start vanilla build..."
+    lunch lineage_a53x-bp2a-user
+    make bacon -j$(nproc --all) 
+    ;;
+  2)
+    echo "start gapps build..."
+    axion gms core
+    make bacon -j$(nproc --all) 
+    ;;
+  *)
+    echo "hmm are you dumbass? pick something!"
+    ;;
+esac
