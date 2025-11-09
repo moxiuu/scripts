@@ -53,8 +53,8 @@ ccache -M 50G -F 0
 
 # select target
 echo "Select an option:"
-echo "1) Build vanilla 1"
-echo "2) Build gapps 2"
+echo "1) Build vanilla"
+echo "2) Build gapps"
 read -p "Pick build target [1-2]: " choice
 
 case $choice in
