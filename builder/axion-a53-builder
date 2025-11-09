@@ -17,8 +17,6 @@ if [[ "$ans" == "y" ]]; then
   echo 'export CCACHE_MAXSIZE=50G' >> ~/.bashrc
 fi
 
-echo "added to bashrc"
-
 # gen keys
 if [ ! -d "$keysdir" ]; then
   echo "gen keys.."
